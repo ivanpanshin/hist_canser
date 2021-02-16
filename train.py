@@ -40,10 +40,8 @@ if __name__ == "__main__":
     utils.seed_everything()
 
     transforms = utils.build_augmentations('train')
-
     loaders = utils.build_dataloaders(data_dir, transforms, 'train', batch_sizes, fold_index=fold_index)
     model = utils.build_model(backbone).cuda()
-
     optim = utils.build_optim(model, optimizer_params_first_stage, scheduler_params, loss_params)
     criterion, optimizer, scheduler = optim['criterion'], optim['optimizer'], optim['scheduler']
 
@@ -73,10 +71,7 @@ if __name__ == "__main__":
 
         utils.add_to_logs(logging, 'Epoch {}, train loss: {:.4f}, valid loss: {:.4f}, valid accuracy: {:.4f}, valid AUC: {:.4f}'.format(epoch, train_metrics['loss'], validation_metrics['loss'], validation_metrics['accuracy'], validation_metrics['val_auc']))
 
-        if epoch >= 2:
-            scheduler.step(validation_metrics['val_auc'])
-
-        elif epoch == 1:
+        if epoch == 1:
             model.unfreeze_model()
             optimizer = utils.build_optim(model, optimizer_params_second_stage, scheduler_params, loss_params)['optimizer']
 
@@ -91,6 +86,5 @@ if __name__ == "__main__":
             
         
         scheduler.step(validation_metrics['val_auc'])
-        #torch.save(model.state_dict(), 'weights/model_{}_fold{}_epoch{}.pth'.format(backbone, fold_index, epoch))
 
     writer.close()
