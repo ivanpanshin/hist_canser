@@ -60,18 +60,23 @@ if __name__ == "__main__":
 
         train_metrics = utils.train_epoch(epoch, model, optimizer, criterion, loaders['train_loader'])
         validation_metrics = utils.validation(epoch, model, criterion, loaders['valid_loader'])
+        
+        for valid_metric in validation_metrics:
+            try:
+                utils.add_to_tensorboard_logs(writer, validation_metrics[valid_metric],
+                                              '{}/validation'.format(valid_metric), epoch)
+            except AssertionError:
+                # in case valid metric is a list
+                pass
 
         utils.add_to_tensorboard_logs(writer, train_metrics['loss'], 'Loss/train', epoch)
-        utils.add_to_tensorboard_logs(writer, validation_metrics['loss'], 'Loss/validation', epoch)
-        utils.add_to_tensorboard_logs(writer, validation_metrics['accuracy'], 'Accuracy/validation', epoch)
-        utils.add_to_tensorboard_logs(writer, validation_metrics['val_auc'], 'AUC/validation', epoch)
 
         utils.add_to_logs(logging, 'Epoch {}, train loss: {:.4f}, valid loss: {:.4f}, valid accuracy: {:.4f}, valid AUC: {:.4f}'.format(epoch, train_metrics['loss'], validation_metrics['loss'], validation_metrics['accuracy'], validation_metrics['val_auc']))
 
         if epoch >= 2:
             scheduler.step(validation_metrics['val_auc'])
 
-        if epoch == 1:
+        elif epoch == 1:
             model.unfreeze_model()
             optimizer = utils.build_optim(model, optimizer_params_second_stage, scheduler_params, loss_params)['optimizer']
 
